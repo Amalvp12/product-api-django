@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Product List</title>
+  <style>
+  body {
+    font-family: Arial, sans-serif;
+    max-width: 700px;
+    margin: auto;
+    padding: 20px;
+    background-color: #f8f9fa;
+  }
+
+  h1 {
+    text-align: center;
+    color: #333;
+  }
+
+  input[type="text"], input[type="number"] {
+    padding: 8px;
+    margin: 5px 10px 10px 0;
+    width: 150px;
+  }
+
+  button {
+    padding: 8px 12px;
+    margin: 10px 5px;
+    background-color: #007bff;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+  }
+
+  button:disabled {
+    background-color: #ccc;
+    cursor: not-allowed;
+  }
+
+  ul#product-list {
+    list-style-type: none;
+    padding: 0;
+  }
+
+  ul#product-list li {
+    background-color: white;
+    padding: 12px;
+    margin-bottom: 8px;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+  }
+</style>
+
+</head>
+<body>
+  <h1>Product List</h1>
+
+  <!-- 🔍 Search Box -->
+  <input type="text" id="search-box" placeholder="Search by product name" />
+<div>
+  <label>Min Price: </label>
+  <input type="number" id="min-price" />
+  <label>Max Price: </label>
+  <input type="number" id="max-price" />
+  <button onclick="applyPriceFilter()">Apply</button>
+</div>
+
+  <!-- 🛒 Product List -->
+  <ul id="product-list"></ul>
+  <div>
+  <button id="prev-btn" onclick="loadPage(prevURL)" disabled>Previous</button>
+  <button id="next-btn" onclick="loadPage(nextURL)" disabled>Next</button>
+</div>
+
+
+<script>
+  let allProducts = [];
+  let nextURL = null;
+  let prevURL = null;
+
+  function displayProducts(products) {
+    const list = document.getElementById("product-list");
+    list.innerHTML = "";
+    products.forEach(product => {
+      const item = document.createElement("li");
+      item.textContent = product.name + " – ₹" + product.price;
+      list.appendChild(item);
+    });
+  }
+
+  function updateButtons(next, prev) {
+    nextURL = next;
+    prevURL = prev;
+
+    document.getElementById("next-btn").disabled = !nextURL;
+    document.getElementById("prev-btn").disabled = !prevURL;
+  }
+
+  function loadPage(url) {
+    fetch(url)
+      .then(response => response.json())
+      .then(data => {
+        allProducts = data.results;
+        displayProducts(allProducts);
+        updateButtons(data.next, data.previous);
+      })
+      .catch(error => {
+        alert("Something went wrong.");
+        console.log("Error:", error);
+      });
+  }
+
+  // Initial load
+  loadPage("http://127.0.0.1:8000/api/products/");
+
+  document.getElementById("search-box").addEventListener("input", function () {
+    const keyword = this.value.toLowerCase();
+    const filtered = allProducts.filter(product =>
+      product.name.toLowerCase().includes(keyword)
+    );
+    displayProducts(filtered);
+  });
+
+  function applyPriceFilter() {
+    const min = parseInt(document.getElementById("min-price").value) || 0;
+    const max = parseInt(document.getElementById("max-price").value) || Infinity;
+
+    const filtered = allProducts.filter(product =>
+      product.price >= min && product.price <= max
+    );
+
+    displayProducts(filtered);
+  }
+</script>
+
+
+</body>
+</html>
